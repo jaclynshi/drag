@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>drag</title>
+    <style>
+        ul {
+            list-style: none;
+            padding: 0;
+
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+        }
+
+        .list-item {
+            background-color: #f2f2f2;
+            padding: 10px;
+            margin-bottom: 5px;
+            cursor: move;
+            /* display: block; */
+
+            width: 30%;
+            display: inline-block;
+        }
+
+        .list-item:hover {
+            background-color: #e6e6e6;
+        }
+
+        .imageList {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+        }
+
+        .imgItem {
+            width: 20%;
+            max-height: 200px;
+            display: inline-block;
+            margin: 10px;
+            cursor: pointer;
+            position: relative;
+            transition: all .3s;
+        }
+
+        .imgItem img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .imgItem.active::after,
+        .imgItem:hover::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, .2);
+            pointer-events: none;
+        }
+
+        .imgItem:hover::before {
+            content: 'x';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            color: #000;
+            background-color: aliceblue;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+    <ul>
+        <li class="list-item" draggable="true" data-id="1">Item 1</li>
+        <li class="list-item" draggable="true" data-id="2">Item 2</li>
+        <li class="list-item" draggable="true" data-id="3">Item 3</li>
+        <li class="list-item" draggable="true" data-id="4">Item 4</li>
+        <li class="list-item" draggable="true" data-id="5">Item 5</li>
+        <li class="list-item" draggable="true" data-id="6">Item 6</li>
+        <li class="list-item" draggable="true" data-id="7">Item 7</li>
+        <li class="list-item" draggable="true" data-id="8">Item 8</li>
+        <li class="list-item" draggable="true" data-id="9">Item 9</li>
+    </ul>
+
+    <input id="upload" type="file" accept="image/png,image/jpg,image/jpeg" />
+    <div id="imageList"></div>
+
+    <script>
+        const listItems = document.querySelectorAll(".list-item");
+        let dragedItem = null;
+
+        for (let i = 0; i < listItems.length; i++) {
+            const item = listItems[i];
+
+            // 给每个item添加drag拖拽事件
+            item.addEventListener("dragstart", function (e) {
+                // 开始拖拽的时候记录当前拖拽元素
+                dragedItem = item;
+            });
+
+            // 监听拖拽结束时清除拖拽元素
+            item.addEventListener("dragend", function (e) {
+                dragedItem = null;
+            })
+
+            // 监听拖拽到某个元素上的时候
+            for (let j = 0; j < listItems.length; j++) {
+                const dropItem = listItems[j];
+
+                dropItem.addEventListener("dragover", function (e) {
+                    e.preventDefault();
+                })
+
+                dropItem.addEventListener("dragenter", function (e) {
+                    // 当拖拽到元素上的时候高亮当前元素
+                    e.preventDefault();
+                    this.style.backgroundColor = 'rgba(0, 0, 0, .2)';
+                });
+
+                dropItem.addEventListener("dragleave", function (e) {
+                    // 当离开的时候恢复当前背景色
+                    this.style.backgroundColor = '#f2f2f2';
+                })
+
+                dropItem.addEventListener("drop", function (e) {
+                    // 鼠标放置的时候
+                    this.style.backgroundColor = '#f2f2f2';
+                    // 插入元素
+                    this.parentNode.insertBefore(dragedItem, this);
+                })
+            }
+        }
+
+        const upload = document.getElementById("upload");
+        const imgList = document.getElementById("imageList");
+        upload.addEventListener("change", function (e) {
+            readUrl(this);
+        })
+
+        function readUrl(e) {
+            if (e.files && e.files[0]) {
+                const fileReader = new FileReader();
+                fileReader.onload = function (e) {
+                    const imgItem = document.createElement("div");
+                    imgItem.classList.add("imgItem");
+                    imgItem.setAttribute("draggable", "true");
+                    const img = document.createElement("img");
+                    img.setAttribute("src", e.target.result);
+                    imgItem.appendChild(img);
+                    imgList.appendChild(imgItem);
+
+                    addEvent();
+                }
+
+                fileReader.readAsDataURL(e.files[0]);
+            }
+        }
+
+        function addEvent() {
+            const listItems = document.querySelectorAll(".imgItem");
+            let dragedItem = null;
+
+            for (let i = 0; i < listItems.length; i++) {
+                const item = listItems[i];
+
+                // 给每个item添加drag拖拽事件
+                item.addEventListener("dragstart", function (e) {
+                    // 开始拖拽的时候记录当前拖拽元素
+                    dragedItem = item;
+                    e.dataTransfer.setDragImage(item, 25, 25);
+                });
+
+                // 监听拖拽结束时清除拖拽元素
+                item.addEventListener("dragend", function (e) {
+                    dragedItem = null;
+                })
+
+                item.addEventListener("click", function(e) {
+                    this.parentNode.removeChild(item);
+                })
+
+                const img = item.querySelector("img")
+                img && img.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    return false;
+                })
+
+                // 监听拖拽到某个元素上的时候
+                for (let j = 0; j < listItems.length; j++) {
+                    const dropItem = listItems[j];
+
+                    dropItem.addEventListener("dragover", function (e) {
+                        e.preventDefault();
+                    })
+
+                    dropItem.addEventListener("dragenter", function (e) {
+                        // 当拖拽到元素上的时候高亮当前元素
+                        e.preventDefault();
+                        // this.style.backgroundColor = 'rgba(0, 0, 0, .2)';
+                        const activeItem = document.querySelector(".active");
+                        activeItem && activeItem.classList.remove("active");
+                        this.classList.add("active");
+                    });
+
+                    dropItem.addEventListener("dragleave", function (e) {
+                        // 当离开的时候恢复当前背景色
+                        // this.style.backgroundColor = '#f2f2f2';
+                    })
+
+                    dropItem.addEventListener("drop", function (e) {
+                        // 鼠标放置的时候
+                        // this.style.backgroundColor = '#f2f2f2';
+                        this.classList.remove("active");
+                        // 插入元素
+                        this.parentNode.insertBefore(dragedItem, this);
+                    })
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
